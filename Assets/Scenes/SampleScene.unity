@@ -793,7 +793,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8135023674665499069, guid: 58d0a4ac86f2348deb02f3880c71378e, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8518324294302271954, guid: 58d0a4ac86f2348deb02f3880c71378e, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1321,6 +1321,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6226047526563281555, guid: 3367c65a2a9b80e4ba2f4f926ec1b483, type: 3}
   m_PrefabInstance: {fileID: 1887725324}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1888635336
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1888635338}
+  - component: {fileID: 1888635337}
+  m_Layer: 0
+  m_Name: ProgramRunner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1888635337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1888635336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3de3b344f9b64ecf98260d7dd793dd30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Cubely.Blocks.Showcase.ProgramRunner
+  buildAction: {fileID: 3345391306548380724, guid: 83a64d589add1194dac86d17525e962c, type: 3}
+  startSlot: {fileID: 6682345166619190116}
+--- !u!4 &1888635338
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1888635336}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.20458, y: 0, z: 5.82205}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1963473067
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4311,7 +4357,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 528e0f152e76bd241b237de73ad80a6e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6857,7 +6903,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 528e0f152e76bd241b237de73ad80a6e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -7604,6 +7650,17 @@ MonoBehaviour:
     m_InputActionReference: {fileID: -8525429354371678379, guid: c348712bda248c246b8c49b3db54643f, type: 3}
     m_ObjectReferenceObject: {fileID: 0}
     m_ManualValue: {x: 0, y: 0}
+--- !u!114 &6682345166619190116 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5748890328999261876, guid: 5e6b8ea5d1326c345a6fde717b0d0e17, type: 3}
+  m_PrefabInstance: {fileID: 1579160598102887833}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfb919aa2ecbd324badf19c8fa8a354f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Cubely.Blocks.Showcase.CodeBlockSlot
 --- !u!4 &6815257723330692521
 Transform:
   m_ObjectHideFlags: 0
@@ -7993,6 +8050,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_ActionAssets:
   - {fileID: -944628639613478452, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+  - {fileID: -944628639613478452, guid: 83a64d589add1194dac86d17525e962c, type: 3}
 --- !u!1 &7238334191012807892
 GameObject:
   m_ObjectHideFlags: 0
@@ -9139,6 +9197,7 @@ SceneRoots:
   - {fileID: 2996636240129451091}
   - {fileID: 249927818}
   - {fileID: 1136624936}
+  - {fileID: 1888635338}
   - {fileID: 1579160598102887833}
   - {fileID: 1592200908}
   - {fileID: 1336359880}

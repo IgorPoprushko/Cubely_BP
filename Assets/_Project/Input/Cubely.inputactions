@@ -1,0 +1,47 @@
+{
+    "version": 1,
+    "name": "Cubely",
+    "maps": [
+        {
+            "name": "Gameplay",
+            "id": "b8731290-7cb8-49f1-a076-cf555cdc0bc9",
+            "actions": [
+                {
+                    "name": "BuildProgram",
+                    "type": "Button",
+                    "id": "e6207f7b-9bab-44fd-bd40-891c40a52ad5",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false,
+                    "priority": 0
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "7482c4a2-cbf3-415c-a401-87792a8098e3",
+                    "path": "<XRController>{RightHand}/{SecondaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "BuildProgram",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "994bead9-bf28-4d85-8b04-eb4fcb13c383",
+                    "path": "<Keyboard>/f5",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "BuildProgram",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

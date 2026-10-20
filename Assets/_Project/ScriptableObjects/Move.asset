@@ -15,7 +15,10 @@ MonoBehaviour:
   displayName: Run
   icon: {fileID: 0}
   color: {r: 0, g: 0, b: 1, a: 1}
-  codeText: run(20);
-  sockets:
+  codeText: 'run(20);
+
+    ${Next}'
+  slots:
   - name: Next
-    repativePosition: {x: 0, y: -1, z: 0}
+    localPosition: {x: 0, y: -1, z: 0}
+    localEulerAngles: {x: 0, y: 0, z: 0}
