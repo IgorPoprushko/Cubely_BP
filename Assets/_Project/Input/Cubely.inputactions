@@ -15,6 +15,16 @@
                     "interactions": "Press",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "TogglePassthrough",
+                    "type": "Button",
+                    "id": "be65f840-60b7-47c5-8cdd-6bd2fece6a30",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -37,6 +47,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "BuildProgram",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8c04f797-4e7b-4f51-84cc-d9669c643ab0",
+                    "path": "<XRController>{LeftHand}/{SecondaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TogglePassthrough",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "83d197e7-9760-4b82-adef-9002a6daf540",
+                    "path": "<Keyboard>/f2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TogglePassthrough",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

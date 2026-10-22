@@ -244,6 +244,8 @@ MonoBehaviour:
     - line: '|   bundleVersion: 0.0.1'
     - line: '|   preloadedAssets:'
     - line: '|   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}'
+    - line: '|   - {fileID: 6299040467144245864, guid: a25c438bc0df2b54ea8b065f1df0fc4b, type: 2}'
+    - line: '|   - {fileID: -7395343768163504074, guid: 8301cf1b19272c246b6a259e22997a38, type: 2}'
     - line: '|   metroInputSource: 0'
     - line: '|   wsaTransparentSwapchain: 0'
     - line: '|   xboxOneDisableKinectGpuReservation: 1'
