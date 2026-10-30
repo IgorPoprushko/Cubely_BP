@@ -17,6 +17,16 @@
                     "priority": 0
                 },
                 {
+                    "name": "StopProgram",
+                    "type": "Button",
+                    "id": "db48b6db-acca-4277-9c79-eb8d130f4454",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false,
+                    "priority": 0
+                },
+                {
                     "name": "TogglePassthrough",
                     "type": "Button",
                     "id": "be65f840-60b7-47c5-8cdd-6bd2fece6a30",
@@ -47,6 +57,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "BuildProgram",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "35d5dc91-ca0b-47fe-8e00-704210520a84",
+                    "path": "<XRController>{RightHand}/{PrimaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "StopProgram",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2f67bc69-1c1a-4320-8e39-0151a2878c33",
+                    "path": "<Keyboard>/f6",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "StopProgram",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

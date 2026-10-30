@@ -1,41 +1,101 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Cubely.Labyrinths
 {
-    /// <summary>Scene configuration and main-thread grid mapping. Does not move the character yet.</summary>
+    /// <summary>Scene instance: shared definition, physical grid scale and generated character.</summary>
     [DisallowMultipleComponent]
     public class Labyrinth : MonoBehaviour
     {
+        [SerializeField] private LabyrinthDefinition definition;
         [SerializeField] private Transform character;
-        [SerializeField] private Vector2Int size = new Vector2Int(5, 5);
-        [Tooltip("Distance between cell centres in this object's local space. Cell (0,0) is at its origin.")]
+        [Tooltip("Distance between cell centres in local space. Cell (0,0) is at this object's origin.")]
         [SerializeField, Min(0.001f)] private float cellSize = 1f;
-        [SerializeField] private Vector2Int startCell;
-        [SerializeField] private GridDirection startDirection = GridDirection.North;
-        [SerializeField] private Vector2Int finishCell = new Vector2Int(4, 4);
-        [Tooltip("Cells occupied by walls/obstacles. These are logical cells, not physics colliders.")]
-        [SerializeField] private Vector2Int[] blockedCells = Array.Empty<Vector2Int>();
+        [SerializeField, HideInInspector] private Quaternion characterBaseRotation = Quaternion.identity;
 
+        private LabyrinthState initialState;
+        private float builtCellSize;
+
+        /// <summary>Raised before replacing a built world or disabling it. Playback must stop immediately.</summary>
+        public event Action Invalidated;
+
+        public LabyrinthDefinition Definition => definition;
         public Transform Character => character;
+        public Quaternion CharacterBaseRotation => characterBaseRotation;
+        public float CellSize => cellSize;
+        public bool IsReady => isActiveAndEnabled && initialState != null && character != null;
+        public IReadOnlyCollection<int> AvailableBlockIds { get; private set; } = Array.Empty<int>();
 
-        /// <summary>Creates a fresh, independent snapshot on the main thread for a future execution.</summary>
+        /// <summary>Each run starts from the exact layout used to build the current visuals.</summary>
         public LabyrinthState CreateState()
+        {
+            if (!IsReady)
+                throw new InvalidOperationException("Enable and successfully build the labyrinth before running a program.");
+            return initialState.Copy();
+        }
+
+        internal LabyrinthState ReadDefinition()
         {
             if (float.IsNaN(cellSize) || float.IsInfinity(cellSize) || cellSize <= 0f)
                 throw new ArgumentOutOfRangeException(nameof(cellSize), "Cell size must be finite and positive.");
+            if (definition == null)
+                throw new InvalidOperationException("Assign a Labyrinth Definition before building or running.");
+            return definition.CreateState();
+        }
 
-            var obstacles = new GridCell[blockedCells == null ? 0 : blockedCells.Length];
-            for (int i = 0; i < obstacles.Length; i++)
-                obstacles[i] = new GridCell(blockedCells[i].x, blockedCells[i].y);
+        internal void CompleteBuild(LabyrinthState state, Transform value, Quaternion baseRotation, int[] blockIds = null)
+        {
+            initialState = state;
+            builtCellSize = cellSize;
+            character = value;
+            characterBaseRotation = baseRotation;
+            AvailableBlockIds = Array.AsReadOnly(blockIds ?? Array.Empty<int>());
+        }
 
-            return new LabyrinthState(size.x, size.y, new GridCell(startCell.x, startCell.y),
-                startDirection, new GridCell(finishCell.x, finishCell.y), obstacles);
+        internal void ApplyCellChange(GridCell position, LabyrinthCell cell) =>
+            GetComponent<LabyrinthCreator>().ApplyCellChange(position, cell);
+
+        internal void ResetCellVisuals() => GetComponent<LabyrinthCreator>().ResetCellVisuals();
+
+        internal void Invalidate()
+        {
+            if (initialState == null)
+                return;
+            initialState = null;
+            Invalidated?.Invoke();
+        }
+
+        private void OnEnable()
+        {
+            if (!Application.isPlaying)
+                return;
+
+            Invalidate();
+            try
+            {
+                var creator = GetComponent<LabyrinthCreator>();
+                if (creator == null || !creator.enabled)
+                    throw new InvalidOperationException("Assign an enabled LabyrinthCreator on the Labyrinth object.");
+                creator.Build();
+            }
+            catch (Exception error)
+            {
+                Debug.LogException(error, this);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (Application.isPlaying)
+                Invalidate();
         }
 
         /// <summary>Unity main thread only. North is local +Z; East is local +X.</summary>
-        public Vector3 CellToWorld(GridCell cell) =>
-            transform.TransformPoint(new Vector3(cell.X * cellSize, 0f, cell.Y * cellSize));
-
+        public Vector3 CellToWorld(GridCell cell)
+        {
+            float spacing = initialState != null ? builtCellSize : cellSize;
+            return transform.TransformPoint(new Vector3(cell.X * spacing, 0f, cell.Y * spacing));
+        }
     }
 }

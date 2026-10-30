@@ -77,23 +77,36 @@ namespace Cubely.Blocks.Showcase
             if (interactable is IXRSelectInteractable selected && Socket.IsSelecting(selected))
                 return true;
 
-            if (interactable.transform.GetComponentInParent<CodeBlockNode>() == null)
+            if (!(interactable is IXRSelectInteractable selectable) ||
+                interactable.transform.GetComponentInParent<CodeBlockNode>() == null)
                 return false;
 
-            // Evaluation repeats while hovering, so grabbing a block already in
-            // the detection area also makes it eligible. No grab-event subscriptions.
-            if (interactable is IXRSelectInteractable selectable && IsHeldByPlayer(selectable))
-                eligibleBlocks.Add(selectable);
+            // A child attached to another socket is not the block held by the hand,
+            // even when its whole subtree is moving with a grabbed parent.
+            foreach (IXRSelectInteractor selectingInteractor in selectable.interactorsSelecting)
+            {
+                if (selectingInteractor is XRSocketInteractor)
+                {
+                    eligibleBlocks.Remove(selectable);
+                    return false;
+                }
+            }
 
-            return true;
+            // Candidate evaluation repeats, so grabbing a block already inside
+            // the detection area can still make it eligible.
+            if (IsHeldByPlayer(selectable))
+            {
+                eligibleBlocks.Add(selectable);
+                return true;
+            }
+
+            return !selectable.isSelected && eligibleBlocks.Contains(selectable);
         }
 
         private static bool IsHeldByPlayer(IXRSelectInteractable interactable)
         {
-            Debug.Log("Start IsHeldByPlayer");
             foreach (IXRSelectInteractor interactor in interactable.interactorsSelecting)
             {
-                Debug.Log($"For interactor: {interactor}");
                 // Includes direct, ray and near/far player input; excludes sockets.
                 if (interactor is XRBaseInputInteractor)
                     return true;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Vector3 = System.Numerics.Vector3;
 
 namespace Cubely.Labyrinths
 {
@@ -26,51 +27,86 @@ namespace Cubely.Labyrinths
     /// <summary>
     /// Independent logical world, with no Unity references or animation.
     /// One execution owns and mutates one instance; this is not shared mutable state.
-    /// Obstacles occupy whole cells and the outer grid boundary is impassable.
+    /// Facing controls movement; the model's Euler offset is presentation only.
     /// </summary>
     public sealed class LabyrinthState
     {
-        private readonly HashSet<GridCell> blockedCells;
+        private readonly LabyrinthCell[] cells;
 
         public int Width { get; }
         public int Height { get; }
         public GridCell Position { get; private set; }
         public GridDirection Direction { get; private set; }
-        public GridCell Finish { get; }
-        public bool HasReachedFinish => Position.Equals(Finish);
+        public Vector3 ModelRotationOffset { get; private set; }
+        /// <summary>Read-only row-major view; use the coordinate indexer to edit a cell.</summary>
+        public IReadOnlyList<LabyrinthCell> Cells { get; }
+        public bool HasReachedFinish => cells[Position.Y * Width + Position.X].Surface == CellSurface.Finish;
 
-        public LabyrinthState(int width, int height, GridCell start, GridDirection direction,
-            GridCell finish, IEnumerable<GridCell> obstacles)
+        public LabyrinthCell this[GridCell position]
         {
-            if (width <= 0 || height <= 0)
-                throw new ArgumentOutOfRangeException(nameof(width), "Grid dimensions must both be positive.");
+            get
+            {
+                if (!IsInside(position)) throw new ArgumentOutOfRangeException(nameof(position));
+                return cells[position.Y * Width + position.X];
+            }
+            set
+            {
+                if (!IsInside(position)) throw new ArgumentOutOfRangeException(nameof(position));
+                if (value.Surface < CellSurface.Empty || value.Surface > CellSurface.Hole || value.BlockId < 0)
+                    throw new ArgumentException("Cells need a valid surface and a non-negative block ID.", nameof(value));
+                cells[position.Y * Width + position.X] = value;
+            }
+        }
+
+        /// <summary>Copies supplied cell data. Unspecified trailing cells remain Empty with BlockId zero.</summary>
+        public LabyrinthState(int width, int height, GridCell start, GridDirection direction,
+            IEnumerable<LabyrinthCell> layout = null, Vector3 modelRotationOffset = default)
+        {
+            cells = new LabyrinthCell[CellCount(width, height)];
             if (direction < GridDirection.North || direction > GridDirection.West)
                 throw new ArgumentOutOfRangeException(nameof(direction));
 
             Width = width;
             Height = height;
-            blockedCells = obstacles == null ? new HashSet<GridCell>() : new HashSet<GridCell>(obstacles);
-            foreach (GridCell cell in blockedCells)
-                if (!IsInside(cell))
-                    throw new ArgumentException($"Obstacle {cell} is outside the grid.", nameof(obstacles));
+            if (layout != null)
+            {
+                int index = 0;
+                foreach (LabyrinthCell cell in layout)
+                {
+                    if (index == cells.Length)
+                        throw new ArgumentException("Layout has more cells than the grid.", nameof(layout));
+                    if (cell.Surface < CellSurface.Empty || cell.Surface > CellSurface.Hole || cell.BlockId < 0)
+                        throw new ArgumentException("Cells need a valid surface and a non-negative block ID.", nameof(layout));
+                    cells[index++] = cell;
+                }
+            }
 
-            if (!IsInside(start) || IsBlocked(start))
-                throw new ArgumentException("Start must be an unblocked cell inside the grid.", nameof(start));
-            if (!IsInside(finish) || IsBlocked(finish))
-                throw new ArgumentException("Finish must be an unblocked cell inside the grid.", nameof(finish));
-
+            if (!IsInside(start))
+                throw new ArgumentException("Position must be inside the grid.", nameof(start));
             Position = start;
             Direction = direction;
-            Finish = finish;
+            SetModelRotationOffset(modelRotationOffset);
+            Cells = Array.AsReadOnly(cells);
         }
 
         public bool IsInside(GridCell cell) => cell.X >= 0 && cell.Y >= 0 && cell.X < Width && cell.Y < Height;
-        public bool IsBlocked(GridCell cell) => blockedCells.Contains(cell);
+        public bool IsBlocked(GridCell cell) => IsInside(cell) && cells[cell.Y * Width + cell.X].BlockId != 0;
 
         /// <summary>Copies the current pose and grid into an independently mutable world.</summary>
-        public LabyrinthState Copy() => new LabyrinthState(Width, Height, Position, Direction, Finish, blockedCells);
+        public LabyrinthState Copy() => new LabyrinthState(Width, Height, Position, Direction, cells, ModelRotationOffset);
 
-        /// <summary>Moves one cell, or returns false without changing state if blocked.</summary>
+        /// <summary>Euler degrees, independent of grid facing. Does not change movement direction.</summary>
+        public void SetModelRotationOffset(Vector3 eulerDegrees)
+        {
+            if (!IsFinite(eulerDegrees.X) || !IsFinite(eulerDegrees.Y) || !IsFinite(eulerDegrees.Z))
+                throw new ArgumentOutOfRangeException(nameof(eulerDegrees), "Rotation angles must be finite.");
+            ModelRotationOffset = eulerDegrees;
+        }
+
+        /// <summary>Adds a delta to the Euler offset components; this is not a world-space quaternion rotation.</summary>
+        public void RotateModel(Vector3 eulerDelta) => SetModelRotationOffset(ModelRotationOffset + eulerDelta);
+
+        /// <summary>Moves by facing. Only boundaries and nonzero block IDs block movement; surface rules are task-specific.</summary>
         public bool TryMoveForward()
         {
             int x = Position.X;
@@ -93,5 +129,15 @@ namespace Cubely.Labyrinths
 
         public void TurnRight() => Direction = (GridDirection)(((int)Direction + 1) % 4);
         public void TurnLeft() => Direction = (GridDirection)(((int)Direction + 3) % 4);
+
+        private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
+        private static int CellCount(int width, int height)
+        {
+            if (width <= 0 || height <= 0 || (long)width * height > int.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(width), "Grid dimensions must be positive and fit in an array.");
+            return width * height;
+        }
+
     }
 }

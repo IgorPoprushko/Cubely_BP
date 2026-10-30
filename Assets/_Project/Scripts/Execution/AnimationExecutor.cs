@@ -21,18 +21,31 @@ namespace Cubely.Execution
         private Transform playbackCharacter;
         private Vector3 completedPosition;
         private Quaternion completedRotation;
+        private Quaternion modelBaseRotation;
 
         public bool IsPlaying => activeSession != null;
         public Labyrinth Labyrinth => labyrinth;
         public Exception LastError { get; private set; }
         public bool IsPlayingSession(ExecutionSession session) => session != null && activeSession == session;
 
+        private void OnEnable()
+        {
+            if (labyrinth != null)
+                labyrinth.Invalidated += OnLabyrinthInvalidated;
+        }
+
+        private void OnLabyrinthInvalidated()
+        {
+            if (activeSession != null)
+                StopSession(activeSession);
+        }
+
         /// <summary>Starts playback on this component and takes ownership of session cleanup on success.</summary>
         public bool PlaySession(ExecutionSession session)
         {
-            if (session == null || !isActiveAndEnabled || labyrinth == null || labyrinth.Character == null)
+            if (session == null || !isActiveAndEnabled || labyrinth == null || !labyrinth.IsReady)
             {
-                Debug.LogWarning("Assign an enabled AnimationExecutor with a Labyrinth and Character.", this);
+                Debug.LogWarning("Assign an enabled AnimationExecutor with a successfully built, enabled Labyrinth.", this);
                 return false;
             }
             if (IsPlaying)
@@ -47,9 +60,13 @@ namespace Cubely.Execution
             }
 
             LastError = null;
+            // Previous runs may have edited cells. Restore the same authored layout as the new worker snapshot.
+            labyrinth.ResetCellVisuals();
             playbackCharacter = labyrinth.Character;
+            // Initial facing and model offset are already applied by the creator, not part of the prefab basis.
+            modelBaseRotation = labyrinth.CharacterBaseRotation;
             completedPosition = WorldPosition(session.InitialPosition);
-            completedRotation = WorldRotation(session.InitialDirection);
+            completedRotation = WorldRotation(session.InitialDirection, session.InitialModelRotationOffset);
             playbackCharacter.SetPositionAndRotation(completedPosition, completedRotation);
             activeSession = session;
             Coroutine started = StartCoroutine(Consume(session));
@@ -139,19 +156,27 @@ namespace Cubely.Execution
 
         private IEnumerator Animate(AnimationCommand command, ExecutionSession session)
         {
+            if (command.Type == AnimationCommandType.CellChanged)
+            {
+                CheckPresentation();
+                labyrinth.ApplyCellChange(command.StartCell, command.CellValue);
+                // Instant edits must still yield, so a producer loop cannot monopolize the VR main thread.
+                yield return null;
+                yield break;
+            }
             if (command.Type != AnimationCommandType.Move && command.Type != AnimationCommandType.Turn &&
-                command.Type != AnimationCommandType.BlockedMove)
+                command.Type != AnimationCommandType.BlockedMove && command.Type != AnimationCommandType.ModelRotation)
                 throw new InvalidOperationException("Unknown animation command type.");
 
             CheckPresentation();
             Vector3 startPosition = WorldPosition(command.StartCell);
             Vector3 endPosition = WorldPosition(command.EndCell);
-            Quaternion startRotation = WorldRotation(command.StartDirection);
-            Quaternion endRotation = WorldRotation(command.EndDirection);
+            Quaternion startRotation = WorldRotation(command.StartDirection, command.StartModelRotationOffset);
+            Quaternion endRotation = WorldRotation(command.EndDirection, command.EndModelRotationOffset);
             playbackCharacter.SetPositionAndRotation(startPosition, startRotation);
 
             float duration = command.Type == AnimationCommandType.Move ? moveDuration :
-                command.Type == AnimationCommandType.Turn ? turnDuration : blockedPauseDuration;
+                command.Type == AnimationCommandType.BlockedMove ? blockedPauseDuration : turnDuration;
             float elapsed = 0f;
             while (elapsed < duration)
             {
@@ -180,15 +205,16 @@ namespace Cubely.Execution
         private Vector3 WorldPosition(GridCell cell) => labyrinth.CellToWorld(cell) +
             labyrinth.transform.TransformVector(Vector3.up * characterHeightOffset);
 
-        private Quaternion WorldRotation(GridDirection direction) =>
-            labyrinth.transform.rotation * Quaternion.Euler(0f, (int)direction * 90f, 0f);
+        private Quaternion WorldRotation(GridDirection direction, System.Numerics.Vector3 offset) =>
+            labyrinth.transform.rotation * Quaternion.Euler(0f, (int)direction * 90f, 0f) *
+            modelBaseRotation * Quaternion.Euler(offset.X, offset.Y, offset.Z);
 
         private static bool IsValidDuration(float duration) =>
             !float.IsNaN(duration) && !float.IsInfinity(duration) && duration >= 0f;
 
         private void CheckPresentation()
         {
-            if (!isActiveAndEnabled || labyrinth == null || playbackCharacter == null ||
+            if (!isActiveAndEnabled || labyrinth == null || !labyrinth.IsReady || playbackCharacter == null ||
                 labyrinth.Character != playbackCharacter)
                 throw new InvalidOperationException("The playback labyrinth or character was disabled, removed or replaced.");
         }
@@ -215,6 +241,8 @@ namespace Cubely.Execution
 
         private void OnDisable()
         {
+            if (labyrinth != null)
+                labyrinth.Invalidated -= OnLabyrinthInvalidated;
             if (activeSession != null)
                 StopSession(activeSession);
         }

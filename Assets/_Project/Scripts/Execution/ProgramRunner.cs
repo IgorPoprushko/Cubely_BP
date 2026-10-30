@@ -82,9 +82,9 @@ namespace Cubely.Blocks.Showcase
                 return;
             }
             if (animationExecutor == null || !animationExecutor.isActiveAndEnabled ||
-                animationExecutor.Labyrinth == null || animationExecutor.Labyrinth.Character == null)
+                animationExecutor.Labyrinth == null || !animationExecutor.Labyrinth.IsReady)
             {
-                Debug.LogWarning("Assign an enabled AnimationExecutor with a Labyrinth and Character.", this);
+                Debug.LogWarning("Assign an enabled AnimationExecutor with a successfully built, enabled Labyrinth.", this);
                 return;
             }
 
@@ -100,8 +100,9 @@ namespace Cubely.Blocks.Showcase
                 SourceBuilder.Build(firstBlock);
                 // All scene access and snapshot creation happen on the main thread.
                 var snapshot = animationExecutor.Labyrinth.CreateState();
-                session = new ExecutionSession(snapshot, ExampleProgram.Run, queueCapacity);
-                Debug.LogWarning("Runtime compilation is not implemented: running the handwritten move/turn/move example, not the printed block source.", this);
+                session = new ExecutionSession(snapshot, ExampleProgram.Run, queueCapacity,
+                    animationExecutor.Labyrinth.AvailableBlockIds);
+                Debug.LogWarning("Runtime compilation is not implemented: running ExampleProgram.Run, not the printed block source.", this);
                 if (!animationExecutor.PlaySession(session))
                     session.Dispose();
             }

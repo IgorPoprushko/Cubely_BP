@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Cubely.Labyrinths;
@@ -16,13 +17,15 @@ namespace Cubely.Execution
         public Task LogicTask { get; }
         public GridCell InitialPosition { get; }
         public GridDirection InitialDirection { get; }
+        public System.Numerics.Vector3 InitialModelRotationOffset { get; }
         public bool IsCancellationRequested => cancellation.IsCancellationRequested;
 
         /// <summary>Producer has exited and the queue is empty. The consumer may still be animating its last command.</summary>
         public bool IsDrained => LogicTask.IsCompleted && commands.IsCompleted;
 
         /// <summary>Call on the main thread with a plain-data snapshot. The program executes only on the worker.</summary>
-        public ExecutionSession(LabyrinthState initialState, Action<ProgramContext> program, int queueCapacity = 8)
+        public ExecutionSession(LabyrinthState initialState, Action<ProgramContext> program, int queueCapacity = 8,
+            IEnumerable<int> availableBlockIds = null)
         {
             if (initialState == null)
                 throw new ArgumentNullException(nameof(initialState));
@@ -33,9 +36,10 @@ namespace Cubely.Execution
 
             commands = new BlockingCollection<AnimationCommand>(queueCapacity);
             CancellationToken token = cancellation.Token;
-            var context = new ProgramContext(initialState, command => commands.Add(command, token), token);
+            var context = new ProgramContext(initialState, command => commands.Add(command, token), token, availableBlockIds);
             InitialPosition = context.Position;
             InitialDirection = context.Direction;
+            InitialModelRotationOffset = context.ModelRotationOffset;
 
             LogicTask = ProduceAsync(context, program, token);
         }
